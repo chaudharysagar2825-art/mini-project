@@ -1,0 +1,3 @@
+-- Manas Setu database architecture placeholder.
+-- Future implementation will define reviewed tables, constraints, relationships, indexes,
+-- access boundaries, retention, and audit structures. No executable schema is provided.

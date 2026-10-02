@@ -1,0 +1,1 @@
+# Architecture scaffold only; dependencies are intentionally unspecified.

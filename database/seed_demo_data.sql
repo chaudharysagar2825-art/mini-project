@@ -1,0 +1,2 @@
+-- Architecture placeholder only.
+-- No seed records or executable SQL are provided. Any future fixtures must be synthetic.

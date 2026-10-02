@@ -1,0 +1,2 @@
+# Architecture placeholder only; no proxy routes or security directives are configured.
+# TODO: Define reviewed TLS, headers, routing, and request limits before deployment.

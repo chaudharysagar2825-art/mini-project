@@ -1,0 +1,3 @@
+# Architecture-stage placeholder only; no runnable services are defined.
+# Future implementation may describe local backend, frontend, and data services here.
+# Do not use this file as a production deployment configuration.

@@ -1,0 +1,3 @@
+# Architecture-stage CI scaffold only.
+# TODO: Add appropriate lint, type, dependency, security, and test checks after implementation.
+# No application tests run and no passing status is implied by this file.

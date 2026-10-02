@@ -1,0 +1,32 @@
+{
+  "folders": [
+    {
+      "path": "frontend"
+    },
+    {
+      "path": "backend"
+    },
+    {
+      "path": "ai"
+    },
+    {
+      "path": "database"
+    },
+    {
+      "path": "integrations"
+    },
+    {
+      "path": "deployment"
+    },
+    {
+      "path": "scripts"
+    },
+    {
+      "path": "docs"
+    }
+  ],
+  "settings": {
+    "files.eol": "\\n",
+    "editor.formatOnSave": false
+  }
+}
