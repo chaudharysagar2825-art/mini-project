@@ -1,7 +1,16 @@
-"""Manas Setu architecture placeholder.
+import secrets
+import string
 
-Future responsibility: define the Identifiers boundary during implementation.
-This module intentionally contains no application logic.
-"""
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+def generate_public_id(prefix: str = "USR") -> str:
+    alphabet = string.ascii_uppercase + string.digits
+    random_part = "".join(
+        secrets.choice(alphabet)
+        for _ in range(10)
+    )
+
+    return f"{prefix}-{random_part}"
+
+
+def generate_case_code() -> str:
+    return generate_public_id("CASE")

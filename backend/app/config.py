@@ -1,7 +1,18 @@
-"""Manas Setu architecture placeholder.
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-Future responsibility: define the Config boundary during implementation.
-This module intentionally contains no application logic.
-"""
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+class Settings(BaseSettings):
+    database_url: str
+
+    jwt_secret_key: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+settings = Settings()

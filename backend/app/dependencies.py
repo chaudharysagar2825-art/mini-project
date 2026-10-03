@@ -1,7 +1,14 @@
-"""Manas Setu architecture placeholder.
+from collections.abc import Generator
 
-Future responsibility: define the Dependencies boundary during implementation.
-This module intentionally contains no application logic.
-"""
+from sqlalchemy.orm import Session
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+from app.database import SessionLocal
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()

@@ -1,7 +1,39 @@
-"""Manas Setu architecture placeholder.
+from datetime import datetime
 
-Future responsibility: define the Referral boundary during implementation.
-This module intentionally contains no application logic.
-"""
+from pydantic import BaseModel, Field
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+
+class ReferralCreate(BaseModel):
+    referral_type: str = Field(
+        pattern="^(mental_health|welfare|protection|legal|financial|rehab)$"
+    )
+
+    organization: str = Field(
+        min_length=1,
+        max_length=200,
+    )
+
+    reason: str = Field(
+        min_length=1,
+        max_length=1000,
+    )
+
+    priority: str = Field(
+        default="routine",
+        pattern="^(routine|follow_up|urgent)$",
+    )
+
+
+class ReferralResponse(BaseModel):
+    id: int
+    case_id: int
+
+    referral_type: str
+    organization: str
+    reason: str
+    priority: str
+
+    status: str
+
+    created_at: datetime
+    updated_at: datetime

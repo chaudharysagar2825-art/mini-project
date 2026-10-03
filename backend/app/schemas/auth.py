@@ -1,7 +1,20 @@
-"""Manas Setu architecture placeholder.
+from pydantic import BaseModel, ConfigDict, Field
 
-Future responsibility: define the Auth boundary during implementation.
-This module intentionally contains no application logic.
-"""
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=3, max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    role: str
+    is_active: bool
