@@ -1,7 +1,17 @@
-"""Manas Setu architecture placeholder.
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError
 
-Future responsibility: define the Hashing boundary during implementation.
-This module intentionally contains no application logic.
-"""
 
-# TODO: Implement only after architecture, privacy, security, and domain review.
+password_hasher = PasswordHasher()
+
+
+def hash_password(password: str) -> str:
+    return password_hasher.hash(password)
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    try:
+        password_hasher.verify(password_hash, password)
+        return True
+    except VerificationError:
+        return False
