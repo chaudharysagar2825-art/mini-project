@@ -1,4 +1,42 @@
-{
-  "status": "architecture-placeholder",
-  "note": "Synthetic data only. No real victim information."
-}
+[
+  {
+    "id": "case-001",
+    "text": "I feel calm and supported today.",
+    "expected_high_risk": false
+  },
+  {
+    "id": "case-002",
+    "text": "I am worried and stressed about what will happen.",
+    "expected_high_risk": false
+  },
+  {
+    "id": "case-003",
+    "text": "I feel overwhelmed and alone and I need help.",
+    "expected_high_risk": true
+  },
+  {
+    "id": "case-004",
+    "text": "I am afraid and I feel unsafe. I need support.",
+    "expected_high_risk": true
+  },
+  {
+    "id": "case-005",
+    "text": "I feel better today and I am hopeful.",
+    "expected_high_risk": false
+  },
+  {
+    "id": "case-006",
+    "text": "I feel hopeless and helpless and I cannot cope.",
+    "expected_high_risk": true
+  },
+  {
+    "id": "case-007",
+    "text": "Today was difficult, but I feel okay.",
+    "expected_high_risk": false
+  },
+  {
+    "id": "case-008",
+    "text": "I am extremely stressed, overwhelmed, and alone.",
+    "expected_high_risk": true
+  }
+]
