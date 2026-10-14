@@ -1,9 +1,11 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.alert import AlertAction, AlertResponse
 from app.security.auth import get_current_user
+from app.security.permissions import require_roles
 from app.services.alert_service import (
     get_alert,
     get_case_alerts,
@@ -91,7 +93,7 @@ def get_alerts_for_case(
 def action_alert(
     alert_id: int,
     data: AlertAction,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_roles("admin")),
     db: Session = Depends(get_db),
 ):
     alert = get_alert(
@@ -110,10 +112,10 @@ def action_alert(
         case_id=alert.case_id,
     )
 
-    if case is None or case.user_id != current_user["user_id"]:
+    if case is None:
         raise HTTPException(
-            status_code=403,
-            detail="You do not have access to this alert",
+            status_code=404,
+            detail="Case not found",
         )
 
     try:

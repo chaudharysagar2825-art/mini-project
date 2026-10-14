@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.security.auth import get_current_user
+from app.security.permissions import require_roles
 from app.services.audit_service import get_audit_logs
 
 
@@ -27,7 +28,9 @@ def get_my_audit_logs(
 def get_resource_audit_logs(
     resource_type: str,
     resource_id: str,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(
+        require_roles("admin")
+    ),
     db: Session = Depends(get_db),
 ):
     return get_audit_logs(

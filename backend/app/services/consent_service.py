@@ -66,11 +66,21 @@ def has_active_consent(
     return consent.status == "granted"
 
 
+
 def update_consent_status(
     db: Session,
     case_id: int,
     status: str,
 ) -> Consent:
+
+    allowed_statuses = {
+        "granted",
+        "paused",
+        "withdrawn",
+    }
+
+    if status not in allowed_statuses:
+        raise ValueError("Invalid consent status")
 
     consent = get_latest_consent(db, case_id)
 
@@ -78,7 +88,6 @@ def update_consent_status(
         raise ValueError("No consent record found")
 
     now = datetime.now(timezone.utc)
-
     consent.status = status
 
     if status == "granted":
@@ -88,9 +97,11 @@ def update_consent_status(
 
     elif status == "paused":
         consent.paused_at = now
+        consent.withdrawn_at = None
 
     elif status == "withdrawn":
         consent.withdrawn_at = now
+        consent.paused_at = None
 
     db.commit()
     db.refresh(consent)

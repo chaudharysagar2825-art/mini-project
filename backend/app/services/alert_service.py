@@ -33,8 +33,7 @@ def create_alert(
     )
 
     db.add(alert)
-    db.commit()
-    db.refresh(alert)
+    db.flush()
 
     return alert
 

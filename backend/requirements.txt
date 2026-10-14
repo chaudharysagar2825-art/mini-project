@@ -1,1 +1,13 @@
-# Architecture scaffold only; dependencies are intentionally unspecified.
+fastapi==0.142.2
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic
+pydantic-settings
+argon2-cffi
+PyJWT
+psycopg2-binary
+python-multipart
+httpx
+pytest
+pytest-asyncio

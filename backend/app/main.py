@@ -9,7 +9,7 @@ from app.api.alerts import router as alerts_router
 from app.api.referrals import router as referrals_router
 from app.api.audit import router as audit_router
 from app.api.dashboards import router as dashboards_router
-
+from app.api.safe_contacts import router as safe_contacts_router
 
 app = FastAPI(
     title="Manas Setu API",
@@ -27,10 +27,18 @@ app.include_router(referrals_router)
 app.include_router(audit_router)
 app.include_router(dashboards_router)
 app.include_router(voice_router)
+app.include_router(safe_contacts_router)
 
 
 @app.get("/")
 def root():
     return {
         "message": "Manas Setu backend is running"
+    }
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "manas-setu-backend"
     }
