@@ -7,7 +7,8 @@ from app.schemas.checkin import (
     CheckInResponse,
 )
 from app.schemas.consent import ConsentCreate, ConsentResponse
-from app.schemas.referral import ReferralCreate, ReferralResponse
+from app.schemas.referral import ReferralCreate, ReferralResponse, ReferralStatusUpdate
+from app.schemas.safe_contacts import SafeContactCreate, SafeContactResponse
 
 __all__ = [
     "AlertAction",
@@ -24,4 +25,7 @@ __all__ = [
     "ConsentResponse",
     "ReferralCreate",
     "ReferralResponse",
+    "ReferralStatusUpdate",
+    "SafeContactCreate",
+    "SafeContactResponse",
 ]

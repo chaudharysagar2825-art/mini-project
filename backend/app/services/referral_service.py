@@ -79,6 +79,24 @@ def update_referral_status(
     if status not in allowed_statuses:
         raise ValueError("Invalid referral status")
 
+    valid_transitions = {
+        "created": {"acknowledged", "cancelled"},
+        "acknowledged": {"in_progress", "cancelled"},
+        "in_progress": {"completed", "cancelled"},
+        "completed": set(),
+        "cancelled": set(),
+    }
+
+    if referral.status in ("completed", "cancelled") and status != referral.status:
+        raise ValueError(
+            f"Cannot update referral that is already in terminal state '{referral.status}'"
+        )
+
+    if status != referral.status and status not in valid_transitions.get(referral.status, set()):
+        raise ValueError(
+            f"Invalid status transition from '{referral.status}' to '{status}'"
+        )
+
     referral.status = status
 
     db.commit()

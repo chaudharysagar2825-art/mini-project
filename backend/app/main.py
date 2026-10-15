@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.voice import router as voice_router
@@ -11,10 +12,20 @@ from app.api.audit import router as audit_router
 from app.api.dashboards import router as dashboards_router
 from app.api.safe_contacts import router as safe_contacts_router
 
+from app.config import settings
+
 app = FastAPI(
     title="Manas Setu API",
     description="Backend API for the Manas Setu project",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 

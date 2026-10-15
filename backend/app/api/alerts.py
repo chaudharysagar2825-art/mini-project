@@ -21,6 +21,24 @@ router = APIRouter(
 
 
 @router.get(
+    "",
+    response_model=list[AlertResponse],
+)
+def get_alerts_queue(
+    current_user: dict = Depends(require_roles("admin", "caseworker", "counsellor")),
+    db: Session = Depends(get_db),
+):
+    from app.models.alert import Alert
+
+    return (
+        db.query(Alert)
+        .order_by(Alert.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+
+@router.get(
     "/{alert_id}",
     response_model=AlertResponse,
 )
@@ -45,7 +63,17 @@ def get_alert_by_id(
         case_id=alert.case_id,
     )
 
-    if case is None or case.user_id != current_user["user_id"]:
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found",
+        )
+
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this alert",
@@ -74,7 +102,11 @@ def get_alerts_for_case(
             detail="Case not found",
         )
 
-    if case.user_id != current_user["user_id"]:
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this case",
@@ -124,6 +156,7 @@ def action_alert(
             alert_id=alert_id,
             action=data.action,
             reason=data.reason,
+            assigned_to=data.assigned_to,
         )
 
     except ValueError as exc:

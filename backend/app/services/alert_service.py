@@ -64,12 +64,16 @@ def update_alert_status(
     alert_id: int,
     action: str,
     reason: str | None = None,
+    assigned_to: int | None = None,
 ) -> Alert:
 
     alert = db.get(Alert, alert_id)
 
     if alert is None:
         raise ValueError("Alert not found")
+
+    if alert.status in ("resolved", "dismissed"):
+        raise ValueError(f"Cannot update alert that is already {alert.status}")
 
     status_map = {
         "acknowledge": "acknowledged",
@@ -81,6 +85,22 @@ def update_alert_status(
 
     if action not in status_map:
         raise ValueError("Invalid alert action")
+
+    if action == "assign":
+        if assigned_to is None:
+            raise ValueError("Assignee user ID is required when action is 'assign'")
+
+        from app.models.user import User
+
+        assignee = db.get(User, assigned_to)
+        if assignee is None:
+            raise ValueError("Assignee user not found")
+        if not assignee.is_active:
+            raise ValueError("Assignee user is not active")
+        if assignee.role == "victim":
+            raise ValueError("Alerts cannot be assigned to victim accounts")
+
+        alert.assigned_to = assigned_to
 
     alert.status = status_map[action]
     alert.action_reason = reason

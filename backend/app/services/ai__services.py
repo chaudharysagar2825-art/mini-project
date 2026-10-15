@@ -7,11 +7,23 @@ It does not independently create alerts, diagnoses,
 or emergency decisions.
 """
 
-from __future__ import annotations
-
+import logging
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
-from ai.pipeline import AIPipelineResult, analyze_checkin
+# Ensure project root (containing 'ai' package) is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+logger = logging.getLogger(__name__)
+
+try:
+    from ai.pipeline import AIPipelineResult, analyze_checkin
+except ImportError:
+    AIPipelineResult = None  # type: ignore[assignment, misc]
+    analyze_checkin = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -102,3 +114,25 @@ def get_ai_summary(
         "explanation": pipeline.explanation.summary,
         "factors": list(pipeline.explanation.factors),
     }
+
+
+def safe_analyze_checkin(answers: dict[str, str]) -> dict[str, object] | None:
+    """Safely run the AI pipeline on check-in answers without throwing exceptions.
+
+    Returns the AI summary dictionary if successful, or None if:
+    - AI module is not available
+    - Input contains no valid text
+    - Any processing error occurs
+    """
+    if analyze_checkin is None:
+        logger.info("AI pipeline is not available; continuing with rule engine.")
+        return None
+
+    try:
+        if not isinstance(answers, dict) or not answers:
+            return None
+        analysis = analyze_checkin_answers(answers)
+        return get_ai_summary(analysis)
+    except Exception as exc:
+        logger.warning("AI analysis skipped due to error: %s", exc)
+        return None

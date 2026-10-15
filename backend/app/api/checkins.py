@@ -62,11 +62,12 @@ def submit_checkin(
             case_id=case_id,
             questionnaire_version=payload.questionnaire_version,
             answers=json.dumps(
-                [answer.model_dump() for answer in payload.answers]
+                {a.question_id: a.answer for a in payload.answers}
             ),
             direct_safety_concern=payload.direct_safety_concern,
-            user_skipped_questions=payload.user_skipped_questions,
+            user_skipped_questions=json.dumps(payload.user_skipped_questions) if payload.user_skipped_questions else None,
             requested_human_contact=payload.requested_human_contact,
+            created_by=current_user["user_id"],
         )
     except ValueError as exc:
         raise HTTPException(

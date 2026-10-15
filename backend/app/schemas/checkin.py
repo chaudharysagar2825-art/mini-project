@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CheckInAnswer(BaseModel):
@@ -38,3 +38,5 @@ class CheckInResponse(BaseModel):
     submitted_at: datetime
 
     risk_level: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

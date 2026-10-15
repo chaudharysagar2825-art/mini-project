@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.referral import ReferralCreate, ReferralResponse
+from app.schemas.referral import (
+    ReferralCreate,
+    ReferralResponse,
+    ReferralStatusUpdate,
+)
 from app.security.auth import get_current_user
 from app.services.case_service import get_case
 from app.services.referral_service import (
@@ -137,10 +141,19 @@ def get_referrals_for_case(
 )
 def change_referral_status(
     referral_id: int,
-    status_value: str,
+    data: ReferralStatusUpdate | None = None,
+    status_value: str | None = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    target_status = data.status if data is not None else status_value
+
+    if not target_status:
+        raise HTTPException(
+            status_code=400,
+            detail="Status must be provided via request body or status_value query parameter",
+        )
+
     referral = get_referral(
         db=db,
         referral_id=referral_id,
@@ -157,7 +170,17 @@ def change_referral_status(
         case_id=referral.case_id,
     )
 
-    if case is None or case.user_id != current_user["user_id"]:
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found",
+        )
+
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this referral",
@@ -167,7 +190,7 @@ def change_referral_status(
         return update_referral_status(
             db=db,
             referral_id=referral_id,
-            status=status_value,
+            status=target_status,
         )
 
     except ValueError as exc:

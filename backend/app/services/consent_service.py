@@ -66,6 +66,28 @@ def has_active_consent(
     return consent.status == "granted"
 
 
+def check_consent_status(
+    db: Session,
+    case_id: int,
+) -> tuple[bool, str]:
+    """Verify consent status and return a clear reason if disallowed."""
+    consent = get_latest_consent(db, case_id)
+
+    if consent is None:
+        return False, "No consent record found. Active consent is required before submitting a check-in"
+
+    if consent.status == "paused":
+        return False, "Consent is currently paused. Please resume consent before submitting a check-in"
+
+    if consent.status == "withdrawn":
+        return False, "Consent has been withdrawn. Active consent is required before submitting a check-in"
+
+    if consent.status != "granted":
+        return False, f"Consent status '{consent.status}' does not permit check-in processing"
+
+    return True, "Active consent verified"
+
+
 
 def update_consent_status(
     db: Session,
