@@ -35,10 +35,13 @@ VICTIM_PAGES = [
 
 STAFF_PAGES = [
     ("Overview", "🏠"),
+    ("Longitudinal Monitoring", "📈"),
     ("Alert Queue", "🚨"),
     ("Case Referrals", "🤝"),
+    ("Multi-Channel Comms", "📡"),
     ("Audit Logs", "📋"),
 ]
+
 
 
 def init_session_state() -> None:

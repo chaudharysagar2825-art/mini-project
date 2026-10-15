@@ -95,7 +95,11 @@ def get_checkins_for_case(
             detail="Case not found",
         )
 
-    if case.user_id != current_user["user_id"]:
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this case",
@@ -124,7 +128,17 @@ def get_checkin_by_id(
 
     case = get_case(db=db, case_id=checkin.case_id)
 
-    if case is None or case.user_id != current_user["user_id"]:
+    if case is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Case not found",
+        )
+
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this check-in",

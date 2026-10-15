@@ -103,19 +103,33 @@ def create_checkin(
         risk_result.reason = "; ".join(reasons)
         risk_result.model_version = f"{risk_result.model_version}+ai-pipeline-v1"
 
-    assessment = Assessment(
-        checkin_id=checkin.id,
-        case_id=case_id,
-        risk_level=risk_result.risk_level,
-        direction=risk_result.direction,
-        score=risk_result.score,
-        confidence=risk_result.confidence,
-        reason=risk_result.reason,
-        model_version=risk_result.model_version,
+    existing_assessment = (
+        db.query(Assessment)
+        .filter(Assessment.checkin_id == checkin.id)
+        .first()
     )
-
-    db.add(assessment)
+    if existing_assessment is not None:
+        assessment = existing_assessment
+        assessment.risk_level = risk_result.risk_level
+        assessment.direction = risk_result.direction
+        assessment.score = risk_result.score
+        assessment.confidence = risk_result.confidence
+        assessment.reason = risk_result.reason
+        assessment.model_version = risk_result.model_version
+    else:
+        assessment = Assessment(
+            checkin_id=checkin.id,
+            case_id=case_id,
+            risk_level=risk_result.risk_level,
+            direction=risk_result.direction,
+            score=risk_result.score,
+            confidence=risk_result.confidence,
+            reason=risk_result.reason,
+            model_version=risk_result.model_version,
+        )
+        db.add(assessment)
     db.flush()
+
 
     alert = create_alert(
         db=db,

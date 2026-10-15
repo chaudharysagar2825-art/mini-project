@@ -14,9 +14,31 @@ class RiskResult:
     confidence: float
     reason: str
     model_version: str
+    risk_category: str = "low"
 
 
 MODEL_VERSION = "rule-v1"
+
+
+def map_risk_category(risk_level: str, score: int) -> str:
+    """Map internal risk_level and score (scale 0-10) to mutually exclusive 4-tier category.
+
+    Documented Distress Scale (0-10):
+    - Low: 0–3
+    - Moderate: greater than 3 and below 7 (scores 4, 5, 6)
+    - High: 7 and below 8 (score 7)
+    - Urgent: 8–10 (or direct safety escalation rule)
+    """
+    if risk_level == "urgent":
+        return "urgent"
+    if score >= 8:
+        return "urgent"
+    if 7 <= score < 8 or risk_level == "high":
+        return "high"
+    if 3 < score < 7 or risk_level == "follow_up":
+        return "moderate"
+    return "low"
+
 
 
 def calculate_risk(
@@ -25,8 +47,9 @@ def calculate_risk(
     direct_safety_concern: bool | None = None,
     missing_data: bool = False,
 ) -> RiskResult:
-
+    """Calculate structured risk assessment from distress score (0-10 scale)."""
     score = max(0, min(distress_score, 10))
+
 
     reasons = []
 
@@ -75,8 +98,10 @@ def calculate_risk(
     confidence = 0.9
 
     if missing_data:
-        confidence = 0.6
-        reasons.append("Some check-in data is missing")
+        confidence = 0.5
+        reasons.append("Incomplete check-in: some questions were omitted or skipped; provisional score requires caseworker review")
+
+    risk_category = map_risk_category(risk_level, score)
 
     return RiskResult(
         risk_level=risk_level,
@@ -85,7 +110,9 @@ def calculate_risk(
         confidence=confidence,
         reason="; ".join(reasons),
         model_version=MODEL_VERSION,
+        risk_category=risk_category,
     )
+
 
 
 def evaluate_checkin(

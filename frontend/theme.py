@@ -443,14 +443,15 @@ def render_badge(status_or_risk: str, text: str | None = None) -> str:
     label = text or status_or_risk.capitalize()
 
     css_class = "ms-badge-neutral"
-    if normalized in ("routine", "granted", "completed"):
+    if normalized in ("routine", "granted", "completed", "low"):
         css_class = "ms-badge-routine"
-    elif normalized in ("follow_up", "paused", "in_progress", "assigned"):
+    elif normalized in ("follow_up", "paused", "in_progress", "assigned", "moderate", "high"):
         css_class = "ms-badge-follow_up"
     elif normalized in ("urgent", "withdrawn", "escalated"):
         css_class = "ms-badge-urgent"
 
     return f'<span class="ms-badge {css_class}">{label}</span>'
+
 
 
 def render_helpline_banner() -> None:

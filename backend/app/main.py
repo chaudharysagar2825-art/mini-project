@@ -8,9 +8,11 @@ from app.api.consent import router as consent_router
 from app.api.checkins import router as checkins_router
 from app.api.alerts import router as alerts_router
 from app.api.referrals import router as referrals_router
+from app.api.assessments import router as assessments_router
 from app.api.audit import router as audit_router
 from app.api.dashboards import router as dashboards_router
 from app.api.safe_contacts import router as safe_contacts_router
+from app.api.communication import router as communication_router
 
 from app.config import settings
 
@@ -33,12 +35,16 @@ app.include_router(auth_router)
 app.include_router(cases_router)
 app.include_router(consent_router)
 app.include_router(checkins_router)
+app.include_router(assessments_router)
 app.include_router(alerts_router)
 app.include_router(referrals_router)
 app.include_router(audit_router)
 app.include_router(dashboards_router)
 app.include_router(voice_router)
 app.include_router(safe_contacts_router)
+app.include_router(communication_router)
+
+
 
 
 @app.get("/")

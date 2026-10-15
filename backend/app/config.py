@@ -25,6 +25,15 @@ class Settings(BaseSettings):
     ]
     cors_allow_credentials: bool = False
 
+    # Multi-channel integrations
+    sms_provider: str = "mock"
+    ivr_provider: str = "mock"
+    sms_gateway_url: str | None = None
+    sms_gateway_key: str | None = None
+    sms_sender_id: str = "MANAS-SETU"
+    ivr_webhook_secret: str | None = None
+
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
         env_file_encoding="utf-8",

@@ -225,6 +225,31 @@ def other_victim_token(other_victim_user):
     )
 
 
+@pytest.fixture()
+def caseworker_user(db):
+    """Create and return a test caseworker user."""
+    user = User(
+        username="testcaseworker",
+        password_hash=hash_password("CaseworkerPass123!"),
+        role="caseworker",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture()
+def caseworker_token(caseworker_user):
+    """Generate a JWT token for caseworker_user."""
+    return create_access_token(
+        subject=str(caseworker_user.id),
+        role=caseworker_user.role,
+    )
+
+
 def auth_header(token: str) -> dict:
     """Build an Authorization header dictionary."""
     return {"Authorization": f"Bearer {token}"}
+

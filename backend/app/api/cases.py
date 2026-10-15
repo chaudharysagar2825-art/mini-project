@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.case import CaseCreate, CaseResponse
 from app.security.auth import get_current_user
+from app.security.permissions import require_roles
 from app.services.case_service import (
     create_case,
     get_case,
     get_user_cases,
     update_case_status,
 )
+
 from app.utils.identifiers import generate_case_code
 
 
@@ -87,6 +89,23 @@ def get_my_cases(
 
 
 @router.get(
+    "",
+    response_model=list[CaseResponse],
+)
+def list_all_cases(
+    current_user: dict = Depends(require_roles("admin", "caseworker", "counsellor")),
+    db: Session = Depends(get_db),
+):
+    from app.models.victim_case import VictimCase
+    return (
+        db.query(VictimCase)
+        .order_by(VictimCase.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+
+@router.get(
     "/{case_id}",
     response_model=CaseResponse,
 )
@@ -106,13 +125,18 @@ def get_case_by_id(
             detail="Case not found",
         )
 
-    if case.user_id != current_user["user_id"]:
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this case",
         )
 
     return case
+
 
 
 @router.patch(

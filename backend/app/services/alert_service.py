@@ -15,11 +15,20 @@ def create_alert(
     if risk_result.risk_level == "routine":
         return None
 
+    existing_alert = (
+        db.query(Alert)
+        .filter(Alert.assessment_id == assessment.id)
+        .first()
+    )
+    if existing_alert is not None:
+        return existing_alert
+
     alert_type = (
         "urgent"
         if risk_result.risk_level == "urgent"
         else "follow_up"
     )
+
 
     alert = Alert(
         case_id=case_id,

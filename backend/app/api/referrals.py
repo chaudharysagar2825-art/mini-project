@@ -45,7 +45,11 @@ def create_case_referral(
             detail="Case not found",
         )
 
-    if case.user_id != current_user["user_id"]:
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this case",
@@ -94,7 +98,17 @@ def get_referral_by_id(
         case_id=referral.case_id,
     )
 
-    if case is None or case.user_id != current_user["user_id"]:
+    if case is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found",
+        )
+
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this referral",
@@ -123,7 +137,11 @@ def get_referrals_for_case(
             detail="Case not found",
         )
 
-    if case.user_id != current_user["user_id"]:
+    user_role = current_user.get("role", "")
+    is_owner = case.user_id == current_user["user_id"]
+    is_staff = user_role in ("admin", "caseworker", "counsellor")
+
+    if not (is_owner or is_staff):
         raise HTTPException(
             status_code=403,
             detail="You do not have access to this case",
@@ -186,11 +204,15 @@ def change_referral_status(
             detail="You do not have access to this referral",
         )
 
+    notes = data.notes if data is not None else None
+
     try:
         return update_referral_status(
             db=db,
             referral_id=referral_id,
             status=target_status,
+            notes=notes,
+            updated_by=current_user["user_id"],
         )
 
     except ValueError as exc:

@@ -60,3 +60,22 @@ class Assessment(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+    @property
+    def risk_category(self) -> str:
+        """Mutually exclusive 4-tier category:
+        - Low: 0–3
+        - Moderate: greater than 3 and below 7 (scores 4, 5, 6)
+        - High: 7 and below 8 (score 7)
+        - Urgent: 8–10 (or direct safety escalation rule)
+        """
+        if self.risk_level == "urgent":
+            return "urgent"
+        if self.score >= 8:
+            return "urgent"
+        if 7 <= self.score < 8 or self.risk_level == "high":
+            return "high"
+        if 3 < self.score < 7 or self.risk_level == "follow_up":
+            return "moderate"
+        return "low"
+

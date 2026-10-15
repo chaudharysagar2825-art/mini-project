@@ -478,3 +478,80 @@ class ManasSetuClient:
             return self._handle_response(r)
         except requests.RequestException as exc:
             raise APIError(503, f"Failed to analyze text: {exc}")
+
+    # ── Assessments & Trends ──────────────────────────────────────────
+    def get_case_assessments(self, token: str, case_id: int) -> list[dict[str, Any]]:
+        """Retrieve persisted assessments for a case."""
+        try:
+            r = requests.get(
+                f"{self.base_url}/assessments/case/{case_id}",
+                headers=self._headers(token),
+                timeout=10,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to load assessments: {exc}")
+
+    def get_case_trends(self, token: str, case_id: int) -> dict[str, Any]:
+        """Retrieve longitudinal distress trends and score timeline."""
+        try:
+            r = requests.get(
+                f"{self.base_url}/dashboards/case/{case_id}/trends",
+                headers=self._headers(token),
+                timeout=10,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to load case trends: {exc}")
+
+    def list_all_cases(self, token: str) -> list[dict[str, Any]]:
+        """Retrieve all cases for staff triage."""
+        try:
+            r = requests.get(
+                f"{self.base_url}/cases",
+                headers=self._headers(token),
+                timeout=10,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to list cases: {exc}")
+
+    # ── Multi-Channel Communication ───────────────────────────────────
+    def get_communication_status(self, token: str) -> dict[str, Any]:
+        """Check active SMS and IVR provider integrations."""
+        try:
+            r = requests.get(
+                f"{self.base_url}/communication/providers/status",
+                headers=self._headers(token),
+                timeout=10,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to check communication status: {exc}")
+
+    def trigger_sms_reminder(self, token: str, case_id: int, phone_number: str) -> dict[str, Any]:
+        """Send a privacy-preserving check-in reminder SMS."""
+        try:
+            r = requests.post(
+                f"{self.base_url}/communication/sms/reminder",
+                json={"case_id": case_id, "phone_number": phone_number},
+                headers=self._headers(token),
+                timeout=10,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to send SMS reminder: {exc}")
+
+    def send_inbound_sms(self, sender_phone: str, message: str) -> dict[str, Any]:
+        """Simulate an incoming SMS message from a victim phone."""
+        try:
+            r = requests.post(
+                f"{self.base_url}/communication/sms/inbound",
+                json={"sender_phone": sender_phone, "message": message},
+                headers=self._headers(),
+                timeout=15,
+            )
+            return self._handle_response(r)
+        except requests.RequestException as exc:
+            raise APIError(503, f"Failed to process inbound SMS: {exc}")
+

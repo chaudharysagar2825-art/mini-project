@@ -6,6 +6,11 @@ from app.schemas.checkin import (
     CheckInCreate,
     CheckInResponse,
 )
+from app.schemas.assessment import (
+    AssessmentResponse,
+    CaseTrendsResponse,
+    LongitudinalTrendItem,
+)
 from app.schemas.consent import ConsentCreate, ConsentResponse
 from app.schemas.referral import ReferralCreate, ReferralResponse, ReferralStatusUpdate
 from app.schemas.safe_contacts import SafeContactCreate, SafeContactResponse
@@ -13,6 +18,9 @@ from app.schemas.safe_contacts import SafeContactCreate, SafeContactResponse
 __all__ = [
     "AlertAction",
     "AlertResponse",
+    "AssessmentResponse",
+    "CaseTrendsResponse",
+    "LongitudinalTrendItem",
     "LoginRequest",
     "TokenResponse",
     "UserResponse",
@@ -28,4 +36,4 @@ __all__ = [
     "ReferralStatusUpdate",
     "SafeContactCreate",
     "SafeContactResponse",
-]
+]

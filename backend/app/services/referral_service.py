@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.referral import Referral
 from app.models.victim_case import VictimCase
+from app.services.audit_service import create_audit_log
 
 
 def create_referral(
@@ -30,6 +31,20 @@ def create_referral(
     )
 
     db.add(referral)
+    db.flush()
+
+    create_audit_log(
+        db=db,
+        user_id=created_by,
+        action="referral_created",
+        resource_type="referral",
+        resource_id=str(referral.id),
+        details=(
+            f"Referral ({referral_type}) created for case #{case_id}; "
+            f"Provider: {organization}; Priority: {priority}"
+        ),
+    )
+
     db.commit()
     db.refresh(referral)
 
@@ -61,6 +76,8 @@ def update_referral_status(
     db: Session,
     referral_id: int,
     status: str,
+    notes: str | None = None,
+    updated_by: int | None = None,
 ) -> Referral:
 
     referral = db.get(Referral, referral_id)
@@ -98,6 +115,22 @@ def update_referral_status(
         )
 
     referral.status = status
+
+    if notes and notes.strip():
+        # Append follow-up note to reason record for auditability
+        referral.reason = f"{referral.reason}\n[Follow-up {status}]: {notes.strip()}"
+
+    create_audit_log(
+        db=db,
+        user_id=updated_by,
+        action="referral_status_updated",
+        resource_type="referral",
+        resource_id=str(referral.id),
+        details=(
+            f"Referral #{referral.id} transitioned to '{status}'"
+            + (f"; Note: {notes.strip()}" if notes and notes.strip() else "")
+        ),
+    )
 
     db.commit()
     db.refresh(referral)

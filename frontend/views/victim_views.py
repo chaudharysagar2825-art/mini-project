@@ -440,14 +440,14 @@ def _render_victim_assessments(
     user: dict[str, Any],
     active_case: dict[str, Any],
 ) -> None:
-    """Render longitudinal check-in assessment history."""
+    """Render longitudinal check-in assessment history and distress trajectory."""
 
     st.markdown(
         """
         <div style="margin-bottom: 20px;">
-            <h2 style="color: #0f4c5c; margin-bottom: 4px;">My Assessment History</h2>
+            <h2 style="color: #0f4c5c; margin-bottom: 4px;">My Well-Being & Assessment History</h2>
             <p style="color: #475569; font-size: 0.9rem; margin: 0;">
-                Longitudinal record of your submitted check-ins and risk indicator levels.
+                Longitudinal record of your check-ins, distress score trajectory, and recovery progress.
             </p>
         </div>
         """,
@@ -455,39 +455,148 @@ def _render_victim_assessments(
     )
 
     try:
-        checkins = client.get_case_checkins(token, active_case["id"])
+        trends = client.get_case_trends(token, active_case["id"])
     except APIError as e:
-        st.error(f"Failed to load check-ins: {e.message}")
-        return
+        st.error(f"Failed to load distress trend history: {e.message}")
+        trends = None
 
-    if not checkins:
+    try:
+        assessments = client.get_case_assessments(token, active_case["id"])
+    except APIError:
+        assessments = []
+
+    history = trends.get("history", []) if trends else []
+
+    if not history:
         st.markdown(
             """
             <div class="ms-empty-state">
                 <div class="ms-empty-icon">📊</div>
-                <h4 style="color: #0f4c5c; margin-bottom: 4px;">No Assessments Recorded Yet</h4>
-                <p style="margin: 0; font-size: 0.9rem;">Once you complete a check-in, your history will appear here.</p>
+                <h4 style="color: #0f4c5c; margin-bottom: 4px;">No Check-Ins Recorded Yet</h4>
+                <p style="margin: 0; font-size: 0.9rem;">Once you complete your first daily check-in, your recovery history and trend will appear here.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
         return
 
-    st.write(f"Showing **{len(checkins)}** check-in assessment(s):")
+    # 1. Top Summary KPI Cards
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with kpi1:
+        st.markdown(
+            f"""
+            <div class="ms-stat-card">
+                <div class="ms-stat-label">Total Check-Ins</div>
+                <div class="ms-stat-value">{trends.get('total_checkins', len(history))}</div>
+                <div class="ms-stat-desc">Completed self-reports</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with kpi2:
+        cat = trends.get("current_risk_category", "low")
+        cat_badge = render_badge(cat, text=f"{cat.upper()} RISK")
+        st.markdown(
+            f"""
+            <div class="ms-stat-card">
+                <div class="ms-stat-label">Current Indicator</div>
+                <div style="margin: 8px 0;">{cat_badge}</div>
+                <div class="ms-stat-desc">Scale 0-10 screening score</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with kpi3:
+        direction = trends.get("overall_direction", "stable").capitalize()
+        dir_icon = "📈" if direction == "Worsening" else ("📉" if direction == "Improving" else "⚖️")
+        st.markdown(
+            f"""
+            <div class="ms-stat-card">
+                <div class="ms-stat-label">Trend Trajectory</div>
+                <div class="ms-stat-value" style="font-size: 1.3rem;">{dir_icon} {direction}</div>
+                <div class="ms-stat-desc">Baseline score progression</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with kpi4:
+        avg_score = trends.get("average_score", 0.0)
+        st.markdown(
+            f"""
+            <div class="ms-stat-card">
+                <div class="ms-stat-label">Avg Distress Score</div>
+                <div class="ms-stat-value">{avg_score} <span style="font-size: 0.9rem; color: #64748b;">/ 10</span></div>
+                <div class="ms-stat-desc">Distress scale (0-10)</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    for item in checkins:
-        cid = item.get("id")
-        date_str = item.get("submitted_at", "")[:16].replace("T", " ")
-        risk = item.get("risk_level") or "routine"
-        badge = render_badge(risk)
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+
+    # 2. Longitudinal Trend Visual Chart
+    if len(history) >= 2:
+        with st.container(border=True):
+            st.markdown(
+                "<h4 style='color: #0f4c5c; margin-top: 0;'>📈 Longitudinal Distress Score Trajectory (0-10 Scale)</h4>",
+                unsafe_allow_html=True,
+            )
+            st.caption("Lower scores indicate lower distress and greater emotional stability. Scores above 7 indicate elevated distress requiring caseworker support.")
+
+            # Build trend chart data
+            chart_data = {
+                "Distress Score (0-10)": [item["score"] for item in history]
+            }
+            labels = [item["timestamp"][:10] for item in history]
+
+            # Render native Streamlit line chart
+            import pandas as pd
+            df_chart = pd.DataFrame(chart_data, index=labels)
+            st.line_chart(df_chart, height=220)
+
+    # 3. Detailed Chronological Assessment Timeline
+    st.markdown("#### Assessment Timeline")
+    st.caption("Showing chronological check-ins and decision-support factors:")
+
+    # Map assessment details by checkin_id
+    asm_by_checkin = {a.get("checkin_id"): a for a in assessments}
+
+    # Render newest first for history reading
+    for item in reversed(history):
+        cid = item.get("checkin_id")
+        date_str = item.get("timestamp", "")[:16].replace("T", " ")
+        score = item.get("score", 0)
+        risk_cat = item.get("risk_category", "low")
+        dir_val = item.get("direction", "unknown")
+        reason = item.get("reason", "Routine indicators recorded.")
+
+        asm = asm_by_checkin.get(cid)
+        model_ver = asm.get("model_version", "rule-v1") if asm else "rule-v1"
+
+        badge = render_badge(risk_cat, text=f"{risk_cat.upper()} DISTRESS")
+        dir_badge = render_badge(dir_val, text=f"{dir_val.upper()}")
 
         with st.container(border=True):
-            c_info, c_badge = st.columns([3, 1])
-            with c_info:
-                st.markdown(f"**Check-In #{cid}** • Submitted on {date_str}")
-                st.caption(f"Status: `{item.get('status', 'submitted')}` | Questionnaire: `{item.get('questionnaire_version', 'v1')}`")
-            with c_badge:
+            h1, h2 = st.columns([3, 1])
+            with h1:
+                st.markdown(f"**Check-In #{cid}** • Recorded on **{date_str}**")
+                st.markdown(
+                    f"**Distress Score:** `{score} / 10` • **Direction:** `{dir_val.capitalize()}` • **Scoring Engine:** `{model_ver}`"
+                )
+                st.markdown(
+                    f"""
+                    <div style="background-color: #f8fafc; border-left: 3px solid #0f4c5c; padding: 8px 12px; border-radius: 4px; margin-top: 6px; font-size: 0.88rem; color: #334155;">
+                        <strong>Factors & Explanation:</strong> {reason}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with h2:
                 st.markdown(f"<div style='text-align: right;'>{badge}</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    render_helpline_banner()
+
 
 
 # ──────────────────────────────────────────────────────────
@@ -519,9 +628,17 @@ def _render_victim_referrals(
         with st.form("new_referral_form"):
             ref_type = st.selectbox(
                 "Service Category",
-                options=["medical", "psychological_counselling", "legal_aid", "shelter", "financial_aid"],
-                format_func=lambda x: x.replace("_", " ").title(),
+                options=["mental_health", "protection", "legal", "financial", "rehab", "welfare"],
+                format_func=lambda x: {
+                    "mental_health": "Mental Health & Psychological Counselling",
+                    "protection": "Protection & Safe Housing",
+                    "legal": "Legal Assistance & DLSA Aid",
+                    "financial": "Financial Assistance & Compensation",
+                    "rehab": "Medical & Physical Rehabilitation",
+                    "welfare": "Welfare & Community Support",
+                }[x],
             )
+
             org = st.text_input("Requested Provider or Organization", placeholder="e.g. District Legal Services Authority (DLSA) / Civil Hospital")
             reason = st.text_area("Description of Needs", placeholder="Describe the assistance you require...", height=80)
             priority = st.selectbox("Priority Level", options=["routine", "urgent"])
